@@ -924,12 +924,29 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
 
       <!-- TAB 2: KUNJUNGAN BARU -->
       <div class="rm-tab-body" id="tab-body-kunjungan">
-        <div class="kunjungan-badge">
-          <i class="fas fa-plus-circle"></i>
-          Isi form ini untuk mencatat kunjungan hari ini. Data akan ditambahkan ke riwayat — tidak menimpa kunjungan sebelumnya.
+        <!-- Banner draft (muncul kalau ada draft belum difinalize) -->
+        <div id="draft-banner" style="display:none;background:#FFFBEB;border:1.5px solid rgba(245,158,11,.4);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:none">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#92400e">
+            <i class="fas fa-clock"></i> Ada data draft dari staff — dokter silakan lanjutkan pengisian di bawah
+          </div>
         </div>
 
-        <div class="modal-sec">Tanggal & Vital Signs</div>
+        <!-- Banner edit riwayat (muncul saat dokter klik edit di riwayat) -->
+        <div id="edit-riwayat-banner" style="display:none;background:var(--primary-l);border:1.5px solid rgba(37,99,235,.3);border-radius:10px;padding:12px 16px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:13px;font-weight:700;color:var(--primary)">
+              <i class="fas fa-edit"></i> Mode Edit Riwayat — Kunjungan ke-<span id="edit-riwayat-idx"></span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="batalEditRiwayat()">
+              <i class="fas fa-times"></i> Batal Edit
+            </button>
+          </div>
+        </div>
+
+        <input type="hidden" id="kj-edit-idx" value="">
+
+        <div class="modal-sec" style="color:var(--teal)"><i class="fas fa-user" style="color:var(--teal)"></i> Bagian Staff — Vital Signs</div>
+        <div class="fg3">
         <div class="fg3">
           <div class="fgroup"><label class="flabel">Tanggal Kunjungan</label>
             <input class="finput" type="date" id="kj-tgl"></div>
@@ -945,7 +962,7 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
             <input class="finput" id="kj-fisik" placeholder="Temuan pemeriksaan fisik…"></div>
         </div>
 
-        <div class="modal-sec">Klinis & Tatalaksana</div>
+        <div class="modal-sec" style="color:var(--primary)"><i class="fas fa-stethoscope" style="color:var(--primary)"></i> Bagian Dokter — Klinis & Tatalaksana</div>
         <div class="fg">
           <div class="fgroup fc"><label class="flabel">Diagnosis</label>
             <input class="finput" id="kj-diagnosa" placeholder="Misal: Low Back Pain, HNP L4-L5…"></div>
@@ -1006,10 +1023,13 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
       </div>
 
     </div><!-- /modal-body -->
-    <div class="modal-footer">
+    <div class="modal-footer" style="gap:8px">
       <button class="btn btn-outline" onclick="closeModal('modal-pasien')">Batal</button>
+      <button class="btn btn-warning" id="btn-draft-pasien" onclick="saveDraft()">
+        <i class="fas fa-clock"></i> Simpan Draft
+      </button>
       <button class="btn btn-primary" id="btn-simpan-pasien" onclick="savePasien()">
-        <i class="fas fa-save"></i> Simpan
+        <i class="fas fa-check-circle"></i> Finalize & Simpan
       </button>
     </div>
   </div>
@@ -2046,6 +2066,9 @@ function openModalPasien(){
   document.getElementById('riwayat-count').textContent='0';
   document.getElementById('riwayat-list').innerHTML='';
   document.getElementById('riwayat-empty').style.display='block';
+  document.getElementById('draft-banner').style.display='none';
+  document.getElementById('edit-riwayat-banner').style.display='none';
+  document.getElementById('kj-edit-idx').value='';
   _pendingFiles=[];
   setYN(false);
   // Buka tab identitas
@@ -2069,11 +2092,27 @@ function openModalEditPasien(d){
   document.getElementById('ep-jadwal').value=d.jadwal||'';
   document.getElementById('ep-next').value=d.jadwalNextKontrol||'';
   setYN(d.kontrolHariIni||false);
-  // Reset tab kunjungan baru (selalu kosong untuk input kunjungan hari ini)
-  ['kj-tensi','kj-nadi','kj-bb','kj-fisik','kj-diagnosa','kj-terapi','kj-catatan','kj-hasil','kj-biaya-periksa','kj-biaya-obat'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.value='';
-  });
-  document.getElementById('kj-tgl').value=tod();
+  // Reset edit mode
+  document.getElementById('kj-edit-idx').value='';
+  document.getElementById('edit-riwayat-banner').style.display='none';
+
+  // Cek apakah ada draft dari staff
+  const hasDraft = !!(d.draft && (d.draft.tensi||d.draft.nadi||d.draft.bb));
+  const draftBanner = document.getElementById('draft-banner');
+
+  if(hasDraft){
+    // Load draft ke form
+    setKunjunganFormData(d.draft);
+    draftBanner.style.display='block';
+    toast('Ada draft dari staff — silakan lanjutkan pengisian dokter','info');
+  }else{
+    // Reset form kosong
+    ['kj-tensi','kj-nadi','kj-bb','kj-fisik','kj-diagnosa','kj-terapi','kj-catatan','kj-hasil','kj-biaya-periksa','kj-biaya-obat'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.value='';
+    });
+    document.getElementById('kj-tgl').value=tod();
+    draftBanner.style.display='none';
+  }
   document.getElementById('biaya-total-box').style.display='none';
   document.getElementById('ep-file-preview').innerHTML='';
   _pendingFiles=[];
@@ -2095,7 +2134,11 @@ function openModalEditPasien(d){
       <div class="visit-item">
         <div class="visit-head">
           <span class="visit-date">Kunjungan ke-${riwayat.length-i} · ${r.tglKunjungan||r.jadwal||r.tgl||'—'}</span>
-          <span class="visit-biaya">${(r.biayaPeriksa||0)+(r.biayaObat||0)>0 ? rp((r.biayaPeriksa||0)+(r.biayaObat||0)) : r.biaya?rp(r.biaya):'—'}</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="visit-biaya">${(r.biayaPeriksa||0)+(r.biayaObat||0)>0 ? rp((r.biayaPeriksa||0)+(r.biayaObat||0)) : r.biaya?rp(r.biaya):'—'}</span>
+            <button class="btn btn-outline btn-sm btn-icon" onclick="editRiwayat(${riwayat.length-1-i})" title="Edit kunjungan ini"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-danger btn-sm btn-icon" onclick="hapusRiwayat(${riwayat.length-1-i})" title="Hapus kunjungan ini"><i class="fas fa-trash"></i></button>
+          </div>
         </div>
         <div class="visit-body">
           ${r.diagnosa?`<div><strong>Dx:</strong> ${r.diagnosa}</div>`:''}
@@ -2119,6 +2162,161 @@ function openModalEditPasien(d){
   openModal('modal-pasien');
 }
 
+
+// ── DRAFT & FINALIZE SYSTEM ────────────────────────────────────
+
+// Ambil semua nilai form kunjungan saat ini
+function getKunjunganFormData(){
+  return {
+    tglKunjungan: document.getElementById('kj-tgl').value||tod(),
+    tensi:        document.getElementById('kj-tensi').value,
+    nadi:         document.getElementById('kj-nadi').value,
+    bb:           document.getElementById('kj-bb').value,
+    fisik:        document.getElementById('kj-fisik').value,
+    diagnosa:     document.getElementById('kj-diagnosa').value.trim(),
+    terapi:       document.getElementById('kj-terapi').value.trim(),
+    catatan:      document.getElementById('kj-catatan').value,
+    hasil:        document.getElementById('kj-hasil').value,
+    biayaPeriksa: parseFloat(document.getElementById('kj-biaya-periksa').value)||0,
+    biayaObat:    parseFloat(document.getElementById('kj-biaya-obat').value)||0,
+  };
+}
+
+// Isi form kunjungan dari data yang ada (untuk load draft / edit riwayat)
+function setKunjunganFormData(r){
+  document.getElementById('kj-tgl').value         = r.tglKunjungan||r.tgl||tod();
+  document.getElementById('kj-tensi').value        = r.tensi||'';
+  document.getElementById('kj-nadi').value         = r.nadi||'';
+  document.getElementById('kj-bb').value           = r.bb||'';
+  document.getElementById('kj-fisik').value        = r.fisik||'';
+  document.getElementById('kj-diagnosa').value     = r.diagnosa||'';
+  document.getElementById('kj-terapi').value       = r.terapi||'';
+  document.getElementById('kj-catatan').value      = r.catatan||'';
+  document.getElementById('kj-hasil').value        = r.hasil||'';
+  document.getElementById('kj-biaya-periksa').value= r.biayaPeriksa||0;
+  document.getElementById('kj-biaya-obat').value   = r.biayaObat||0;
+  updateTotalBiaya();
+}
+
+// SIMPAN DRAFT (staff) — simpan ke field 'draft' di dokumen pasien, belum ke riwayat
+async function saveDraft(){
+  const id = document.getElementById('ep-id').value;
+  if(!id){ toast('Buka rekam medis pasien dulu!','error'); return; }
+
+  const draftData = getKunjunganFormData();
+
+  // Minimal harus ada vital signs
+  if(!draftData.tensi && !draftData.nadi && !draftData.bb){
+    toast('Isi minimal satu data vital (tensi, nadi, atau BB)!','error'); return;
+  }
+
+  // Upload file jika ada
+  let newLamp = [];
+  if(_pendingFiles.length>0){
+    toast('Memproses '+_pendingFiles.length+' file…','info');
+    newLamp = await uploadFiles();
+  }
+  draftData.lampiran = newLamp;
+
+  try{
+    const btn = document.getElementById('btn-draft-pasien');
+    btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Menyimpan…';
+
+    // Simpan identitas dulu (dari tab identitas)
+    const identitasData = {
+      rm:       document.getElementById('ep-rm').value,
+      daftar:   document.getElementById('ep-daftar').value,
+      nama:     document.getElementById('ep-nama').value.trim(),
+      usia:     parseInt(document.getElementById('ep-usia').value)||0,
+      hp:       document.getElementById('ep-hp').value,
+      alamat:   document.getElementById('ep-alamat').value,
+      keluhan:  document.getElementById('ep-keluhan').value,
+      layanan:  document.getElementById('ep-layanan').value,
+      jadwal:   document.getElementById('ep-jadwal').value,
+      jadwalNextKontrol: document.getElementById('ep-next').value,
+      kontrolHariIni: _ynVal,
+      draft: draftData,  // simpan draft di sini
+    };
+
+    await fbUpdate('pasien', id, identitasData);
+    _pendingFiles=[];
+    document.getElementById('ep-file-preview').innerHTML='';
+    _pasienCache=[];
+    btn.disabled=false; btn.innerHTML='<i class="fas fa-clock"></i> Simpan Draft';
+    toast('Draft tersimpan! Dokter bisa lanjutkan pengisian.','success');
+    closeModal('modal-pasien');
+  }catch(e){
+    document.getElementById('btn-draft-pasien').disabled=false;
+    document.getElementById('btn-draft-pasien').innerHTML='<i class="fas fa-clock"></i> Simpan Draft';
+    toast('Gagal simpan draft: '+e.message,'error');
+    console.error(e);
+  }
+}
+
+// EDIT RIWAYAT — load data kunjungan ke-idx ke form untuk diedit
+function editRiwayat(idx){
+  const id = document.getElementById('ep-id').value;
+  if(!id) return;
+  const pasien = _pasienCache.find(x=>x.id===id);
+  if(!pasien) return;
+
+  const riwayat = pasien.riwayat||[];
+  const entry = riwayat[idx];
+  if(!entry) return;
+
+  // Load data ke form
+  setKunjunganFormData(entry);
+  document.getElementById('kj-edit-idx').value = idx;
+
+  // Tampilkan banner edit, sembunyikan banner draft
+  document.getElementById('edit-riwayat-banner').style.display='block';
+  document.getElementById('draft-banner').style.display='none';
+  document.getElementById('edit-riwayat-idx').textContent = idx+1;
+
+  // Pindah ke tab kunjungan
+  switchRmTab('kunjungan', document.querySelectorAll('.rm-tab')[1]);
+  toast('Data kunjungan ke-'+(idx+1)+' dimuat untuk diedit','info');
+}
+
+// BATAL EDIT RIWAYAT
+function batalEditRiwayat(){
+  document.getElementById('kj-edit-idx').value='';
+  document.getElementById('edit-riwayat-banner').style.display='none';
+  // Reset form
+  ['kj-tgl','kj-tensi','kj-nadi','kj-bb','kj-fisik','kj-diagnosa',
+   'kj-terapi','kj-catatan','kj-hasil','kj-biaya-periksa','kj-biaya-obat'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('kj-tgl').value=tod();
+  updateTotalBiaya();
+  toast('Edit dibatalkan','info');
+}
+
+// HAPUS RIWAYAT — hapus satu entri kunjungan dari array riwayat
+async function hapusRiwayat(idx){
+  const id = document.getElementById('ep-id').value;
+  if(!id) return;
+  const pasien = _pasienCache.find(x=>x.id===id);
+  if(!pasien) return;
+
+  confirmDel('Hapus catatan kunjungan ke-'+(idx+1)+' ini? Data tidak bisa dikembalikan.', async()=>{
+    try{
+      const riwayat = [...(pasien.riwayat||[])];
+      riwayat.splice(idx, 1);
+      await fbUpdate('pasien', id, {riwayat});
+      _pasienCache=[];
+      toast('Kunjungan ke-'+(idx+1)+' berhasil dihapus','warning');
+      // Refresh modal
+      const updated = await fbGet('pasien');
+      _pasienCache = updated;
+      const p = updated.find(x=>x.id===id);
+      if(p) openModalEditPasien(p);
+    }catch(e){
+      toast('Gagal hapus: '+e.message,'error');
+    }
+  });
+}
+
 async function savePasien(){
   const nama=document.getElementById('ep-nama').value.trim();
   if(!nama){
@@ -2130,11 +2328,15 @@ async function savePasien(){
   const biayaObat=parseFloat(document.getElementById('kj-biaya-obat').value)||0;
   const totalBiaya=biayaPeriksa+biayaObat;
 
+  // Cek mode: edit riwayat atau tambah baru
+  const editIdx = document.getElementById('kj-edit-idx').value;
+  const isEditMode = editIdx !== '';
+
   // Cek ada data kunjungan yang diisi
   const kjDiagnosa=document.getElementById('kj-diagnosa').value.trim();
   const kjTerapi=document.getElementById('kj-terapi').value.trim();
   const kjTensi=document.getElementById('kj-tensi').value.trim();
-  const adaDataKunjungan=kjDiagnosa||kjTerapi||kjTensi||totalBiaya>0||_pendingFiles.length>0;
+  const adaDataKunjungan=isEditMode||kjDiagnosa||kjTerapi||kjTensi||totalBiaya>0||_pendingFiles.length>0;
 
   // Upload / proses file baru jika ada
   let newLamp=[];
@@ -2149,6 +2351,7 @@ async function savePasien(){
   }
 
   const existing=id?(_pasienCache.find(x=>x.id===id)||{}):{};
+  const existingData=existing;
   const existLamp=existing.lampiran||[];
   const existRiwayat=existing.riwayat||[];
 
@@ -2168,25 +2371,32 @@ async function savePasien(){
     lampiran:[...existLamp,...newLamp],
   };
 
-  // Jika ada data kunjungan baru → tambahkan ke riwayat
+  // Buat entri kunjungan dari form
+  const entryKunjungan={
+    tglKunjungan:document.getElementById('kj-tgl').value||tod(),
+    tensi:document.getElementById('kj-tensi').value,
+    nadi:document.getElementById('kj-nadi').value,
+    bb:document.getElementById('kj-bb').value,
+    fisik:document.getElementById('kj-fisik').value,
+    diagnosa:kjDiagnosa,
+    terapi:kjTerapi,
+    catatan:document.getElementById('kj-catatan').value,
+    hasil:document.getElementById('kj-hasil').value,
+    biayaPeriksa, biayaObat,
+    biaya:totalBiaya,
+    lampiran:newLamp,
+  };
+
   let updatedRiwayat=existRiwayat;
-  let entryKunjungan=null;
   if(adaDataKunjungan){
-    entryKunjungan={
-      tglKunjungan:document.getElementById('kj-tgl').value||tod(),
-      tensi:document.getElementById('kj-tensi').value,
-      nadi:document.getElementById('kj-nadi').value,
-      bb:document.getElementById('kj-bb').value,
-      fisik:document.getElementById('kj-fisik').value,
-      diagnosa:kjDiagnosa,
-      terapi:kjTerapi,
-      catatan:document.getElementById('kj-catatan').value,
-      hasil:document.getElementById('kj-hasil').value,
-      biayaPeriksa, biayaObat,
-      biaya:totalBiaya, // untuk kompatibilitas backward
-      lampiran:newLamp,
-    };
-    updatedRiwayat=[...existRiwayat, entryKunjungan];
+    if(isEditMode){
+      // Mode edit — replace entry di index yang dipilih
+      updatedRiwayat=[...existRiwayat];
+      updatedRiwayat[parseInt(editIdx)]=entryKunjungan;
+    }else{
+      // Mode baru — tambah ke akhir array
+      updatedRiwayat=[...existRiwayat, entryKunjungan];
+    }
   }
 
   const dataFinal={...identitasData, riwayat:updatedRiwayat};
@@ -2196,8 +2406,17 @@ async function savePasien(){
     btnSimpan.disabled=true;
     btnSimpan.innerHTML='<i class="fas fa-spinner fa-spin"></i> Menyimpan…';
 
-    if(id){await fbUpdate('pasien',id,dataFinal);toast('Rekam medis diperbarui!');}
-    else{await fbAdd('pasien',dataFinal);toast('Pasien ditambahkan!');}
+    // Hapus draft setelah finalize (jika ada)
+    if(dataFinal.draft) delete dataFinal.draft;
+    // Untuk Firestore, perlu set draft=null untuk menghapus field
+    if(id && existingData?.draft){
+      dataFinal.draft = null;
+    }
+    if(id){
+      await fbUpdate('pasien',id,dataFinal);
+      const modeMsg = isEditMode ? 'Kunjungan berhasil diperbarui!' : 'Rekam medis diperbarui!';
+      toast(modeMsg);
+    }else{await fbAdd('pasien',dataFinal);toast('Pasien ditambahkan!');}
 
     // AUTO CATAT PEMASUKAN jika ada biaya
     if(totalBiaya>0){
@@ -2230,7 +2449,9 @@ async function savePasien(){
 
     _pasienCache=[];
     btnSimpan.disabled=false;
-    btnSimpan.innerHTML='<i class="fas fa-save"></i> Simpan';
+    btnSimpan.innerHTML='<i class="fas fa-check-circle"></i> Finalize & Simpan';
+    document.getElementById('kj-edit-idx').value='';
+    document.getElementById('edit-riwayat-banner').style.display='none';
     closeModal('modal-pasien');
     renderPasien();
   }catch(e){
