@@ -1695,6 +1695,12 @@ function navigate(page){
   const loaders={dashboard:loadDashboard,jadwal:renderJadwal,antrian:renderAntrian,
     pasien:renderPasien,keuangan:renderKeuangan,obat:renderObat,alat:renderAlat};
   if(loaders[page])loaders[page]();
+  // Tutup sidebar otomatis setelah pilih menu di mobile
+  if(window.innerWidth<=768){
+    document.getElementById('sidebar').classList.remove('open');
+    const ov=document.getElementById('sidebar-overlay');
+    if(ov) ov.style.display='none';
+  }
 }
 
 // ── FIRESTORE HELPERS ──────────────────────────────────────────
@@ -2752,15 +2758,7 @@ function toggleSidebar(){
   const isOpen=sb.classList.toggle('open');
   ov.style.display=isOpen?'block':'none';
 }
-// Tutup sidebar saat navigate di mobile
-const _origNavigate=navigate;
-function navigate(page){
-  _origNavigate(page);
-  if(window.innerWidth<=768){
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebar-overlay').style.display='none';
-  }
-}
+// Sidebar mobile ditutup langsung di dalam fungsi navigate
 
 // ── INIT ──────────────────────────────────────────────────────
 setTimeout(()=>{
