@@ -51,7 +51,7 @@ onAuthStateChanged(auth, user => {
     showApp(window._currentUser.role);
   } else {
     window._currentUser = null;
-    showLogin();
+    showPublicForm();
   }
 });
 </script>
@@ -73,7 +73,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);font
 ::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 
 /* ── LOGIN ── */
-#login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;
+#login-page{min-height:100vh;display:none;align-items:center;justify-content:center;
   background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#0ea5e9 100%);}
 .login-card{background:white;border-radius:22px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 40px 100px rgba(0,0,0,.35);}
 .login-brand{display:flex;align-items:center;gap:12px;margin-bottom:30px;}
@@ -97,18 +97,28 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);font
   border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-top:10px;display:none;}
 .pub-link{text-align:center;margin-top:22px;font-size:13px;color:var(--text-muted);}
 .pub-link a{color:var(--primary);font-weight:700;cursor:pointer;}
+.login-back{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,.6);
+  cursor:pointer;margin-bottom:24px;transition:color .18s;}
+.login-back:hover{color:white;}
 
 /* ── PUBLIC FORM ── */
-#public-page{min-height:100vh;background:linear-gradient(135deg,#EFF6FF,#F0FDF4);
-  display:none;align-items:flex-start;justify-content:center;padding:32px 16px;}
+#public-page{min-height:100vh;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0d4f8c 100%);
+  display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;}
 .pub-card{background:white;border-radius:22px;width:100%;max-width:700px;
-  box-shadow:0 24px 64px rgba(0,0,0,.1);overflow:hidden;margin:auto;}
-.pub-head{background:linear-gradient(135deg,#0f172a,#1e3a5f);padding:28px 32px;color:white;}
+  box-shadow:0 32px 80px rgba(0,0,0,.35);overflow:hidden;margin:auto;}
+.pub-head{background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.04));
+  border-bottom:1px solid rgba(255,255,255,.1);padding:22px 28px;color:white;}
 .pub-head-top{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
-.pub-head-icon{width:46px;height:46px;background:rgba(255,255,255,.15);border-radius:13px;
-  display:flex;align-items:center;justify-content:center;font-size:22px;}
-.pub-head h1{font-size:21px;font-weight:800;}
-.pub-head p{font-size:13px;opacity:.6;margin-top:4px;}
+.pub-head-icon{width:44px;height:44px;background:linear-gradient(135deg,#2563EB,#0EA5E9);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(37,99,235,.4);}
+.pub-head h1{font-size:20px;font-weight:800;}
+.pub-head p{font-size:12.5px;opacity:.6;margin-top:3px;}
+.pub-head-login-btn{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);
+  color:white;border-radius:10px;padding:8px 14px;font-size:12.5px;font-weight:700;
+  cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;gap:7px;
+  flex-shrink:0;transition:all .18s;white-space:nowrap;}
+.pub-head-login-btn:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.45);}
 .pub-notice{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
   border-radius:10px;padding:12px 16px;font-size:12.5px;margin-top:14px;opacity:.85;
   display:flex;align-items:flex-start;gap:8px;}
@@ -408,35 +418,123 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
 .empty{text-align:center;padding:40px 20px;color:var(--text-muted);}
 .empty i{font-size:34px;margin-bottom:10px;display:block;opacity:.3;}
 @media(max-width:768px){
+  /* ── Sidebar & layout ── */
   #sidebar{transform:translateX(-100%);transition:transform .25s ease;z-index:300;}
   #sidebar.open{transform:translateX(0);}
   #sidebar-overlay{display:block;}
   #main{margin-left:0;}
-  .kpi-grid{grid-template-columns:1fr 1fr;}
-  .fg,.fg3{grid-template-columns:1fr;}
-  .hari-grid{grid-template-columns:1fr 1fr;}
-  .sum-row{grid-template-columns:1fr 1fr;}
-  .topbar{padding:0 14px;}
-  .topbar h1{font-size:15px;}
+
+  /* ── Topbar ── */
+  .topbar{padding:0 12px;height:54px;}
+  .topbar h1{font-size:14px;}
   .topbar p{display:none;}
   #chip-date{display:none;}
+  #chip-role{font-size:10.5px;padding:4px 8px;}
   .btn-hamburger{display:flex!important;}
-  .modal{width:98%;max-height:96vh;}
-  .modal-body{padding:14px 16px;}
+  .topbar .btn-wa{display:none;}
+
+  /* ── Page body ── */
+  .page-body{padding:12px 12px;}
+
+  /* ── KPI grid ── */
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .kpi{padding:12px 14px;}
+  .kpi-val{font-size:20px;}
+  .kpi-lbl{font-size:11.5px;}
+  .kpi-icon{width:32px;height:32px;font-size:13px;margin-bottom:8px;}
+
+  /* ── Cards ── */
+  .card{margin-bottom:12px;}
+  .card-header{padding:12px 14px;flex-wrap:wrap;gap:8px;}
+  .card-title{font-size:13px;}
+  .card-body{padding:12px 14px;}
+
+  /* ── Summary row (keuangan) ── */
+  .sum-row{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+  .sum-box .val{font-size:15px;}
+
+  /* ── Toolbar ── */
+  .toolbar{flex-direction:column;align-items:stretch;gap:8px;margin-bottom:10px;}
+  .srch{max-width:100%;}
+  .toolbar > div{display:flex;gap:6px;flex-wrap:wrap;}
+  .fsel{flex:1;min-width:0;}
+
+  /* ── Tables ── */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;}
+  table{min-width:560px;}
+  th{font-size:10px;padding:8px 10px;}
+  td{padding:9px 10px;font-size:12.5px;}
+
+  /* ── Grids ── */
+  .fg,.fg3{grid-template-columns:1fr;}
   .biaya-split{grid-template-columns:1fr;}
-  .page-body{padding:14px 16px;}
+  .hari-grid{grid-template-columns:1fr 1fr;}
+
+  /* ── Modals ── */
+  .modal{width:100%;max-width:100%;margin:0;border-radius:18px 18px 0 0;max-height:92vh;
+    position:fixed;bottom:0;left:0;right:0;transform:none!important;}
+  .modal-overlay{align-items:flex-end;}
+  .modal-overlay.show .modal{transform:none!important;}
+  .modal-header{padding:14px 16px;border-radius:18px 18px 0 0;}
+  .modal-body{padding:14px 16px;}
+  .modal-footer{padding:12px 16px;gap:8px;}
+  .modal-footer .btn{flex:1;justify-content:center;padding:10px 8px;}
+
+  /* ── RM Tabs on mobile ── */
+  .rm-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;
+    margin:-14px -16px 14px;padding:0 16px;}
+  .rm-tab{flex-shrink:0;font-size:12px;padding:10px 14px;white-space:nowrap;}
+
+  /* ── Buttons ── */
+  .btn-sm{padding:6px 10px;font-size:11.5px;}
+  .btn-icon{width:30px;height:30px;padding:5px;}
+
+  /* ── Public form ── */
+  #public-page{padding:0;align-items:flex-start;}
+  .pub-card{border-radius:0;min-height:100vh;box-shadow:none;max-width:100%;}
+  .pub-head{padding:18px 16px;}
+  .pub-head h1{font-size:17px;}
+  .pub-head p{font-size:12px;}
+  .pub-head-login-btn{padding:7px 11px;font-size:11.5px;}
+  .pub-body{padding:16px 16px;}
+  .pub-notice{font-size:11.5px;}
+  .wizard-steps{gap:0;}
+  .wstep-lbl{font-size:10.5px;}
+  .wstep-num{width:26px;height:26px;font-size:12px;}
+  .wstep-line{margin:0 4px;}
+  .sesi-wrap{gap:8px;}
+  .sesi-btn{padding:8px 14px;font-size:12.5px;}
+
+  /* ── Login page ── */
+  .login-card{padding:28px 20px;margin:16px;border-radius:18px;}
+  .login-h{font-size:19px;}
+
+  /* ── Dashboard grid ── */
+  #pg-dashboard > div:last-child{grid-template-columns:1fr!important;}
+
+  /* ── Alert strip ── */
+  .alert-strip{font-size:12px;padding:8px 12px;}
 }
-/* Overlay gelap saat sidebar terbuka di mobile */
+
+/* ── Overlay gelap saat sidebar terbuka di mobile ── */
 #sidebar-overlay{
   display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
   z-index:299;
 }
-/* Tombol hamburger — hanya tampil di mobile */
+/* ── Tombol hamburger — hanya tampil di mobile ── */
 .btn-hamburger{
   display:none;align-items:center;justify-content:center;
   width:38px;height:38px;border-radius:9px;border:none;
   background:var(--surface2);color:var(--text);cursor:pointer;
   font-size:17px;flex-shrink:0;
+}
+@media(max-width:400px){
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .sum-row{grid-template-columns:1fr 1fr;}
+  .hari-grid{grid-template-columns:1fr 1fr;}
+  table{min-width:480px;}
+  .modal-footer{flex-direction:column;}
+  .modal-footer .btn{width:100%;}
 }
 </style>
 </head>
@@ -462,11 +560,14 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
 <!-- LOGIN -->
 <div id="login-page">
   <div class="login-card">
+    <div class="login-back" onclick="showPublicForm()">
+      <i class="fas fa-arrow-left"></i> Kembali ke halaman pendaftaran
+    </div>
     <div class="login-brand">
       <div class="lbr-icon"><i class="fas fa-stethoscope"></i></div>
       <div><h1>Klinik Nyeri<br>& Saraf</h1><p>Sistem Manajemen Klinik</p></div>
     </div>
-    <div class="login-h">Selamat Datang 👋</div>
+    <div class="login-h">Login Staff / Dokter</div>
     <div class="login-sub">Masuk dengan akun klinik Anda</div>
     <div class="fi-g"><label class="fl">Email</label>
       <input class="fi" type="email" id="li-email" placeholder="email@klinik.com" autocomplete="email"></div>
@@ -474,17 +575,19 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
       <input class="fi" type="password" id="li-pass" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="btn-login" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Masuk</button>
     <div class="login-err" id="li-err"></div>
-    <div class="pub-link">Pasien baru? <a onclick="showPublicForm()">Daftar / Buat Janji →</a></div>
   </div>
 </div>
 
 <!-- PUBLIC FORM -->
 <div id="public-page">
   <div class="pub-card">
-    <div class="pub-head">
+    <div class="pub-head" style="background:linear-gradient(135deg,#0f172a,#1e3a5f)">
       <div class="pub-head-top">
         <div class="pub-head-icon">🏥</div>
-        <div><h1>Pendaftaran & Janji Temu</h1><p>Klinik Nyeri & Saraf</p></div>
+        <div style="flex:1"><h1>Pendaftaran & Janji Temu</h1><p>Klinik Nyeri & Saraf</p></div>
+        <button class="pub-head-login-btn" onclick="showLogin()">
+          <i class="fas fa-lock"></i> Login Staff
+        </button>
       </div>
       <div class="pub-notice">
         <i class="fas fa-info-circle" style="margin-top:2px;flex-shrink:0"></i>
@@ -878,7 +981,9 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
       <div class="card">
         <div class="card-header">
           <div class="card-title"><i class="fas fa-pills"></i> Stok Obat & Alkes</div>
-          <div style="display:flex;gap:8px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="exportObatPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="btn btn-teal btn-sm" onclick="exportObatExcel()"><i class="fas fa-file-excel"></i> Excel</button>
             <button class="btn btn-outline btn-sm" onclick="openModal('modal-ts')"><i class="fas fa-exchange-alt"></i> Transaksi</button>
             <button class="btn btn-primary btn-sm" onclick="openModalObat()"><i class="fas fa-plus"></i> Tambah</button>
           </div>
@@ -915,7 +1020,11 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
       <div class="card">
         <div class="card-header">
           <div class="card-title"><i class="fas fa-toolbox"></i> Inventori Peralatan Medis</div>
-          <button class="btn btn-primary btn-sm" onclick="openModalAlat()"><i class="fas fa-plus"></i> Tambah</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="exportAlatPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="btn btn-teal btn-sm" onclick="exportAlatExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn btn-primary btn-sm" onclick="openModalAlat()"><i class="fas fa-plus"></i> Tambah</button>
+          </div>
         </div>
         <div class="card-body">
           <div class="toolbar">
@@ -1816,10 +1925,15 @@ function showLogin(){
   document.getElementById('public-page').style.display='none';
   document.getElementById('app-shell').style.display='none';
   document.getElementById('loading').style.display='none';
+  // Reset error
+  const err=document.getElementById('li-err');
+  if(err){err.style.display='none';err.textContent='';}
 }
 function showPublicForm(){
   document.getElementById('login-page').style.display='none';
   document.getElementById('public-page').style.display='flex';
+  document.getElementById('app-shell').style.display='none';
+  document.getElementById('loading').style.display='none';
   buildHariGrid();
 }
 function showApp(role){
@@ -3038,6 +3152,92 @@ async function delObat(id){
   });
 }
 
+// ── EXPORT STOK OBAT ──────────────────────────────────────────
+function exportObatPDF(){
+  if(!_obatCache.length){toast('Belum ada data stok','warning');return;}
+  const tgl=new Date().toLocaleString('id-ID');
+  const low=_obatCache.filter(x=>x.stok<=x.minStok).length;
+  const printWin=window.open('','_blank');
+  printWin.document.write(`
+    <html><head><title>Stok Obat & Alkes</title>
+    <style>
+      body{font-family:sans-serif;padding:24px;font-size:12px;color:#111}
+      h1{font-size:17px;margin-bottom:3px;font-weight:800}
+      .meta{color:#555;font-size:12px;margin-bottom:6px}
+      .warn{display:inline-block;background:#FEF2F2;color:#991B1B;border:1px solid #FCA5A5;
+        border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;margin-bottom:16px}
+      table{width:100%;border-collapse:collapse;margin-top:8px}
+      th{background:#EFF6FF;color:#1d4ed8;font-size:10px;text-transform:uppercase;
+        letter-spacing:.5px;padding:7px 9px;text-align:left;border-bottom:2px solid #BFDBFE}
+      td{padding:7px 9px;border-bottom:1px solid #e5e7eb}
+      tr:hover{background:#f9fafb}
+      .low{color:#DC2626;font-weight:800}
+      .ok{color:#059669;font-weight:700}
+      .r{text-align:right}
+      .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+      .badge-red{background:#FEE2E2;color:#991B1B}
+      .badge-green{background:#D1FAE5;color:#065F46}
+    </style></head><body>
+    <h1>🏥 Klinik Nyeri & Saraf — Stok Obat & Alkes</h1>
+    <div class="meta">Dicetak: ${tgl} · Total item: <strong>${_obatCache.length}</strong></div>
+    ${low>0?`<div class="warn">⚠️ ${low} item stok rendah</div>`:''}
+    <table>
+      <thead><tr>
+        <th>#</th><th>Nama Item</th><th>Jenis</th><th>Satuan</th>
+        <th class="r">Stok</th><th class="r">Min</th>
+        <th class="r">H.Beli</th><th class="r">H.Jual</th>
+        <th>Kadaluarsa</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+        ${_obatCache.map((d,i)=>{
+          const isLow=d.stok<=d.minStok;
+          const exp=d.exp?new Date(d.exp).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'—';
+          const rp=n=>n?'Rp '+Number(n).toLocaleString('id-ID'):'—';
+          return`<tr>
+            <td style="color:#9CA3AF">${i+1}</td>
+            <td><strong>${d.nama||'—'}</strong>${d.catatan?`<br><span style="color:#9CA3AF;font-size:10px">${d.catatan}</span>`:''}
+            </td>
+            <td>${d.jenis||'—'}</td>
+            <td>${d.satuan||'—'}</td>
+            <td class="r ${isLow?'low':'ok'}">${d.stok??'—'}</td>
+            <td class="r" style="color:#6B7280">${d.minStok||'—'}</td>
+            <td class="r">${rp(d.hargaBeli)}</td>
+            <td class="r">${rp(d.hargaJual)}</td>
+            <td style="${d.exp&&new Date(d.exp)<new Date()?'color:#DC2626;font-weight:700':''}">${exp}</td>
+            <td><span class="badge ${isLow?'badge-red':'badge-green'}">${isLow?'Rendah':'OK'}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    <script>window.onload=()=>{window.print();window.close();}<\/script>
+    </body></html>`);
+  printWin.document.close();
+}
+
+function exportObatExcel(){
+  if(!_obatCache.length){toast('Belum ada data stok','warning');return;}
+  const tgl=new Date().toLocaleString('id-ID');
+  const wsData=[
+    ['Laporan Stok Obat & Alkes — Klinik Nyeri & Saraf'],
+    [`Dicetak: ${tgl}`],
+    [],
+    ['#','Nama Item','Jenis','Satuan','Stok','Stok Min','H.Beli (Rp)','H.Jual (Rp)','Kadaluarsa','Status'],
+    ..._obatCache.map((d,i)=>[
+      i+1, d.nama||'—', d.jenis||'—', d.satuan||'—',
+      d.stok??0, d.minStok||0,
+      d.hargaBeli||0, d.hargaJual||0,
+      d.exp||'—',
+      d.stok<=d.minStok?'Stok Rendah':'OK'
+    ]),
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[{wch:4},{wch:28},{wch:12},{wch:10},{wch:8},{wch:8},{wch:14},{wch:14},{wch:14},{wch:12}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Stok Obat');
+  XLSX.writeFile(wb,`Stok_Obat_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('File Excel stok obat berhasil didownload!');
+}
+
 async function saveTrxStok(){
   const itemId=document.getElementById('ts-item').value;
   const jenis=document.getElementById('ts-jenis').value;
@@ -3136,6 +3336,90 @@ async function delAlat(id){
   });
 }
 
+// ── EXPORT PERALATAN MEDIS ────────────────────────────────────
+function exportAlatPDF(){
+  if(!_alatCache.length){toast('Belum ada data peralatan','warning');return;}
+  const tgl=new Date().toLocaleString('id-ID');
+  const perluService=_alatCache.filter(x=>x.kondisi==='Perlu Service').length;
+  const rusak=_alatCache.filter(x=>x.kondisi==='Rusak').length;
+  const printWin=window.open('','_blank');
+  printWin.document.write(`
+    <html><head><title>Inventori Peralatan Medis</title>
+    <style>
+      body{font-family:sans-serif;padding:24px;font-size:12px;color:#111}
+      h1{font-size:17px;margin-bottom:3px;font-weight:800}
+      .meta{color:#555;font-size:12px;margin-bottom:6px}
+      .summary{display:flex;gap:12px;margin-bottom:16px}
+      .sbox{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;padding:6px 12px;font-size:11.5px}
+      .sbox.warn{background:#FEF3C7;border-color:#FDE68A;color:#92400E}
+      .sbox.danger{background:#FEE2E2;border-color:#FECACA;color:#991B1B}
+      table{width:100%;border-collapse:collapse}
+      th{background:#EFF6FF;color:#1d4ed8;font-size:10px;text-transform:uppercase;
+        letter-spacing:.5px;padding:7px 9px;text-align:left;border-bottom:2px solid #BFDBFE}
+      td{padding:7px 9px;border-bottom:1px solid #e5e7eb}
+      tr:hover{background:#f9fafb}
+      .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+      .badge-green{background:#D1FAE5;color:#065F46}
+      .badge-orange{background:#FEF3C7;color:#92400E}
+      .badge-red{background:#FEE2E2;color:#991B1B}
+    </style></head><body>
+    <h1>🏥 Klinik Nyeri & Saraf — Inventori Peralatan Medis</h1>
+    <div class="meta">Dicetak: ${tgl} · Total alat: <strong>${_alatCache.length}</strong></div>
+    <div class="summary">
+      <div class="sbox">✅ Baik: <strong>${_alatCache.filter(x=>x.kondisi==='Baik').length}</strong></div>
+      ${perluService?`<div class="sbox warn">🔧 Perlu Service: <strong>${perluService}</strong></div>`:''}
+      ${rusak?`<div class="sbox danger">❌ Rusak: <strong>${rusak}</strong></div>`:''}
+    </div>
+    <table>
+      <thead><tr>
+        <th>#</th><th>Nama Alat</th><th>Kategori</th><th>No.Seri</th>
+        <th>Tgl Beli</th><th>Garansi s/d</th><th>Kondisi</th><th>Lokasi</th>
+      </tr></thead>
+      <tbody>
+        ${_alatCache.map((d,i)=>{
+          const kc=d.kondisi==='Baik'?'badge-green':d.kondisi==='Perlu Service'?'badge-orange':'badge-red';
+          const fmtD=s=>s?new Date(s).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'—';
+          const gExp=d.garansi&&new Date(d.garansi)<new Date();
+          return`<tr>
+            <td style="color:#9CA3AF">${i+1}</td>
+            <td><strong>${d.nama||'—'}</strong>${d.merek?`<br><span style="color:#9CA3AF;font-size:10px">${d.merek}</span>`:''}
+            </td>
+            <td>${d.kategori||'—'}</td>
+            <td style="font-family:monospace;font-size:10.5px;color:#6B7280">${d.seri||'—'}</td>
+            <td>${fmtD(d.tglBeli)}</td>
+            <td style="${gExp?'color:#DC2626;font-weight:700':''}">${fmtD(d.garansi)}${gExp?' ⚠️':''}</td>
+            <td><span class="badge ${kc}">${d.kondisi||'—'}</span></td>
+            <td style="color:#6B7280">${d.lokasi||'—'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    <script>window.onload=()=>{window.print();window.close();}<\/script>
+    </body></html>`);
+  printWin.document.close();
+}
+
+function exportAlatExcel(){
+  if(!_alatCache.length){toast('Belum ada data peralatan','warning');return;}
+  const tgl=new Date().toLocaleString('id-ID');
+  const wsData=[
+    ['Inventori Peralatan Medis — Klinik Nyeri & Saraf'],
+    [`Dicetak: ${tgl}`],
+    [],
+    ['#','Nama Alat','Merek/Model','Kategori','No.Seri','Tgl Beli','Garansi s/d','Kondisi','Lokasi','Catatan'],
+    ..._alatCache.map((d,i)=>[
+      i+1, d.nama||'—', d.merek||'—', d.kategori||'—', d.seri||'—',
+      d.tglBeli||'—', d.garansi||'—', d.kondisi||'—', d.lokasi||'—', d.catatan||''
+    ]),
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[{wch:4},{wch:26},{wch:18},{wch:14},{wch:14},{wch:12},{wch:12},{wch:14},{wch:16},{wch:24}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Peralatan Medis');
+  XLSX.writeFile(wb,`Peralatan_Medis_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('File Excel peralatan berhasil didownload!');
+}
+
 // ── SIDEBAR MOBILE ────────────────────────────────────────────
 function toggleSidebar(){
   const sb=document.getElementById('sidebar');
@@ -3148,8 +3432,7 @@ function toggleSidebar(){
 // ── INIT ──────────────────────────────────────────────────────
 setTimeout(()=>{
   if(document.getElementById('loading').style.display!=='none'){
-    document.getElementById('loading').style.display='none';
-    showLogin();
+    showPublicForm();
   }
 },6000);
 </script>
