@@ -112,7 +112,22 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);font
 .pub-notice{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
   border-radius:10px;padding:12px 16px;font-size:12.5px;margin-top:14px;opacity:.85;
   display:flex;align-items:flex-start;gap:8px;}
-.pub-body{padding:28px 32px;}
+.pub-body{padding:24px 28px;}
+/* Wizard step indicator */
+.wizard-steps{display:flex;align-items:center;gap:0;margin-bottom:24px;}
+.wstep{display:flex;align-items:center;gap:8px;flex:1;}
+.wstep-num{width:30px;height:30px;border-radius:50%;background:var(--border);color:var(--text-muted);
+  font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.wstep-lbl{font-size:12px;font-weight:600;color:var(--text-muted);transition:all .2s;}
+.wstep.active .wstep-num{background:var(--primary);color:white;}
+.wstep.active .wstep-lbl{color:var(--primary);}
+.wstep.done .wstep-num{background:var(--green);color:white;}
+.wstep.done .wstep-lbl{color:var(--green);}
+.wstep-line{flex:1;height:2px;background:var(--border);margin:0 8px;transition:all .2s;}
+.wstep-line.done{background:var(--green);}
+/* Wizard panels */
+.wizard-panel{display:none;}.wizard-panel.active{display:block;}
+.wizard-nav{display:flex;gap:10px;margin-top:20px;justify-content:space-between;}
 .sec-div{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);
   font-weight:700;padding:16px 0 10px;display:flex;align-items:center;gap:10px;}
 .sec-div::after{content:'';flex:1;height:1px;background:var(--border);}
@@ -477,93 +492,156 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
       </div>
     </div>
     <div class="pub-body">
-      <!-- Jenis -->
-      <div class="fgroup" style="margin-bottom:18px">
-        <label class="flabel">Jenis Kunjungan</label>
-        <div style="display:flex;gap:10px;margin-top:6px">
-          <button class="hari-btn selected" id="jk-baru" onclick="setJenis('baru')" style="flex:1;padding:14px">
-            <div class="hday">🆕 Baru</div><div style="font-size:12px;margin-top:4px">Belum pernah berobat</div>
-          </button>
-          <button class="hari-btn" id="jk-kontrol" onclick="setJenis('kontrol')" style="flex:1;padding:14px">
-            <div class="hday">🔄 Kontrol</div><div style="font-size:12px;margin-top:4px">Sudah pernah berobat</div>
-          </button>
+
+      <!-- STEP INDICATOR -->
+      <div class="wizard-steps" id="wizard-steps">
+        <div class="wstep active" id="ws-1">
+          <div class="wstep-num">1</div>
+          <div class="wstep-lbl">Jenis</div>
+        </div>
+        <div class="wstep-line" id="wl-1"></div>
+        <div class="wstep" id="ws-2">
+          <div class="wstep-num">2</div>
+          <div class="wstep-lbl">Data Diri</div>
+        </div>
+        <div class="wstep-line" id="wl-2"></div>
+        <div class="wstep" id="ws-3">
+          <div class="wstep-num">3</div>
+          <div class="wstep-lbl">Jadwal</div>
+        </div>
+        <div class="wstep-line" id="wl-3"></div>
+        <div class="wstep" id="ws-4">
+          <div class="wstep-num">4</div>
+          <div class="wstep-lbl">Konfirmasi</div>
         </div>
       </div>
 
-      <!-- Kontrol lookup -->
-      <div id="kontrol-lookup" class="lookup-box" style="display:none;margin-bottom:18px">
-        <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:6px">
-          <i class="fas fa-search"></i> Cari data kunjungan sebelumnya
+      <!-- STEP 1: Jenis Kunjungan -->
+      <div class="wizard-panel active" id="wp-1">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px">Pilih jenis kunjungan:</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <button class="hari-btn" id="jk-baru" onclick="setJenisWizard('baru')" style="padding:18px;text-align:left;display:flex;align-items:center;gap:14px">
+            <div style="font-size:28px">🆕</div>
+            <div><div style="font-weight:800;font-size:15px">Pasien Baru</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:3px">Belum pernah berobat di klinik ini</div></div>
+          </button>
+          <button class="hari-btn" id="jk-kontrol" onclick="setJenisWizard('kontrol')" style="padding:18px;text-align:left;display:flex;align-items:center;gap:14px">
+            <div style="font-size:28px">🔄</div>
+            <div><div style="font-weight:800;font-size:15px">Kontrol / Kunjungan Ulang</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:3px">Sudah pernah berobat sebelumnya</div></div>
+          </button>
         </div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
-          Isi minimal salah satu: nama <em>atau</em> No. HP. Keduanya diisi = hasil lebih akurat.
+        <div style="text-align:center;margin-top:20px;font-size:12.5px;color:var(--text-muted)">
+          Staff/Dokter? <a onclick="showLogin()" style="color:var(--primary);cursor:pointer;font-weight:700">Login di sini</a>
         </div>
-        <div class="fg" style="gap:10px">
-          <div class="fgroup"><label class="flabel">Nama Lengkap / Sebagian</label>
-            <input class="finput" type="text" id="lk-nama" placeholder="Contoh: Budi atau Budi Santoso"
-              onkeydown="if(event.key==='Enter')lookupPasien()"></div>
-          <div class="fgroup"><label class="flabel">No. HP / WhatsApp</label>
-            <input class="finput" type="tel" id="lk-hp" placeholder="08xxxxxxxxxx"
-              onkeydown="if(event.key==='Enter')lookupPasien()"></div>
-        </div>
-        <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="lookupPasien()">
-          <i class="fas fa-search"></i> Cari Data Saya
-        </button>
-        <div class="lookup-found" id="lk-found">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-            <div style="width:38px;height:38px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:800" id="lk-av">?</div>
-            <div><div style="font-weight:800;font-size:15px" id="lk-name">—</div><div style="font-size:12px;color:var(--text-muted)" id="lk-meta">—</div></div>
-            <span class="badge badge-green" style="margin-left:auto">✓ Ditemukan</span>
+      </div>
+
+      <!-- STEP 2: Data Diri -->
+      <div class="wizard-panel" id="wp-2">
+        <!-- Panel 2A: Pasien Baru -->
+        <div id="form-baru">
+          <div style="font-size:15px;font-weight:700;margin-bottom:16px">Isi data diri Anda:</div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="fgroup">
+              <label class="flabel">Nama Lengkap *</label>
+              <input class="finput" id="pf-nama" placeholder="Nama sesuai KTP" style="font-size:16px;padding:13px">
+            </div>
+            <div class="fgroup">
+              <label class="flabel">Usia (tahun) *</label>
+              <input class="finput" type="number" id="pf-usia" placeholder="Contoh: 45" min="1" max="120" style="font-size:16px;padding:13px">
+            </div>
+            <div class="fgroup">
+              <label class="flabel">No. HP / WhatsApp *</label>
+              <input class="finput" type="tel" id="pf-hp" placeholder="08xxxxxxxxxx" style="font-size:16px;padding:13px">
+            </div>
+            <div class="fgroup">
+              <label class="flabel">Alamat (Kota / Kecamatan)</label>
+              <input class="finput" id="pf-alamat" placeholder="Contoh: Binjai Utara" style="font-size:16px;padding:13px">
+            </div>
+            <div class="fgroup">
+              <label class="flabel">Keluhan Utama *</label>
+              <textarea class="finput" id="pf-keluhan" rows="3" placeholder="Ceritakan keluhan Anda…" style="font-size:16px;padding:13px"></textarea>
+            </div>
           </div>
-          <div style="font-size:12px;color:var(--text-muted)">Jadwal kontrol akan terhubung ke rekam medis yang sama.</div>
         </div>
-        <div id="lk-notfound" style="display:none;margin-top:10px;font-size:13px;color:var(--red)">
-          <i class="fas fa-times-circle"></i> Tidak ditemukan. Periksa kembali nama dan nomor HP.
+        <!-- Panel 2B: Kontrol - cari data -->
+        <div id="kontrol-lookup" class="lookup-box" style="display:none">
+          <div style="font-size:15px;font-weight:700;margin-bottom:6px">
+            <i class="fas fa-search"></i> Cari data kunjungan sebelumnya
+          </div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">
+            Isi nama atau No. HP yang dipakai saat pertama daftar
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="fgroup">
+              <label class="flabel">Nama Lengkap / Sebagian</label>
+              <input class="finput" type="text" id="lk-nama" placeholder="Contoh: Budi atau Budi Santoso" style="font-size:16px;padding:13px"
+                onkeydown="if(event.key==='Enter')lookupPasien()">
+            </div>
+            <div class="fgroup">
+              <label class="flabel">No. HP / WhatsApp</label>
+              <input class="finput" type="tel" id="lk-hp" placeholder="08xxxxxxxxxx" style="font-size:16px;padding:13px"
+                onkeydown="if(event.key==='Enter')lookupPasien()">
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:14px;width:100%;justify-content:center;padding:12px" onclick="lookupPasien()">
+            <i class="fas fa-search"></i> Cari Data Saya
+          </button>
+          <div class="lookup-found" id="lk-found" style="margin-top:12px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <div style="width:40px;height:40px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:16px" id="lk-av">?</div>
+              <div><div style="font-weight:800;font-size:15px" id="lk-name">—</div>
+              <div style="font-size:12px;color:var(--text-muted)" id="lk-meta">—</div></div>
+              <span class="badge badge-green" style="margin-left:auto">✓ Ditemukan</span>
+            </div>
+          </div>
+          <div id="lk-notfound" style="display:none;margin-top:10px;font-size:13px;color:var(--red)">
+            <i class="fas fa-times-circle"></i> Tidak ditemukan. Coba nama atau nomor HP lain.
+          </div>
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-outline" onclick="goWizard(1)"><i class="fas fa-arrow-left"></i> Kembali</button>
+          <button class="btn btn-primary" onclick="wizardNext2()">Lanjut <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
 
-      <!-- Data diri -->
-      <div id="form-baru">
-        <div class="sec-div">Data Diri Pasien</div>
-        <div class="fg" style="margin-bottom:13px">
-          <div class="fgroup fc"><label class="flabel">Nama Lengkap *</label>
-            <input class="finput" id="pf-nama" placeholder="Nama lengkap"></div>
-          <div class="fgroup"><label class="flabel">Usia (tahun) *</label>
-            <input class="finput" type="number" id="pf-usia" placeholder="45" min="1" max="120"></div>
-          <div class="fgroup"><label class="flabel">No. HP / WhatsApp *</label>
-            <input class="finput" type="tel" id="pf-hp" placeholder="08xxxxxxxxxx"></div>
-          <div class="fgroup fc"><label class="flabel">Alamat</label>
-            <input class="finput" id="pf-alamat" placeholder="Kota / Kecamatan"></div>
-          <div class="fgroup fc"><label class="flabel">Keluhan Utama *</label>
-            <textarea class="finput" id="pf-keluhan" rows="3" placeholder="Deskripsikan keluhan Anda…"></textarea></div>
+      <!-- STEP 3: Pilih Jadwal -->
+      <div class="wizard-panel" id="wp-3">
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px">Pilih hari:</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Tap hari yang tersedia</div>
+        <div class="hari-grid" id="hari-grid">
+          <div style="text-align:center;padding:20px;color:var(--text-muted);grid-column:1/-1">
+            <i class="fas fa-spinner fa-spin"></i> Memuat jadwal…
+          </div>
+        </div>
+        <div style="margin-top:16px;font-size:15px;font-weight:700;margin-bottom:8px">Pilih sesi:</div>
+        <div class="sesi-wrap" id="sesi-wrap">
+          <button class="sesi-btn" id="s1930" onclick="setSesi('19.30',this)">🕖 19.30</button>
+          <button class="sesi-btn" id="s2000" onclick="setSesi('20.00',this)">🕗 20.00</button>
+          <button class="sesi-btn" id="s2030" onclick="setSesi('20.30',this)">🕗 20.30</button>
+        </div>
+        <div id="jadwal-sel" style="margin-top:12px;font-size:13px;color:var(--green);display:none;font-weight:700">
+          ✅ Jadwal dipilih: <strong id="jadwal-sel-label"></strong>
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-outline" onclick="goWizard(2)"><i class="fas fa-arrow-left"></i> Kembali</button>
+          <button class="btn btn-primary" onclick="wizardNext3()">Lanjut <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
 
-      <!-- Jadwal -->
-      <div class="sec-div">Pilih Jadwal Janji Temu *</div>
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Pilih hari yang tersedia:</div>
-      <div class="hari-grid" id="hari-grid">
-        <div style="text-align:center;padding:20px;color:var(--text-muted);grid-column:1/-1">
-          <i class="fas fa-spinner fa-spin"></i> Memuat jadwal…
+      <!-- STEP 4: Konfirmasi -->
+      <div class="wizard-panel" id="wp-4">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px">Konfirmasi pendaftaran:</div>
+        <div style="background:var(--surface2);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;margin-bottom:20px" id="konfirmasi-box">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:15px" onclick="submitPublicForm()">
+          <i class="fas fa-paper-plane"></i> Kirim Pendaftaran
+        </button>
+        <div class="wizard-nav" style="justify-content:flex-start;margin-top:10px">
+          <button class="btn btn-outline" onclick="goWizard(3)"><i class="fas fa-arrow-left"></i> Kembali</button>
         </div>
       </div>
-      <div style="margin-top:14px;font-size:13px;color:var(--text-muted);margin-bottom:8px">Pilih sesi:</div>
-      <div class="sesi-wrap" id="sesi-wrap">
-        <button class="sesi-btn" id="s1930" onclick="setSesi('19.30',this)">🕖 19.30</button>
-        <button class="sesi-btn" id="s2000" onclick="setSesi('20.00',this)">🕗 20.00</button>
-        <button class="sesi-btn" id="s2030" onclick="setSesi('20.30',this)">🕗 20.30</button>
-      </div>
-      <div id="jadwal-sel" style="margin-top:10px;font-size:13px;color:var(--text-muted);display:none">
-        ✅ Jadwal dipilih: <strong id="jadwal-sel-label"></strong>
-      </div>
 
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px;margin-top:20px"
-        onclick="submitPublicForm()">
-        <i class="fas fa-paper-plane"></i> Kirim Pendaftaran
-      </button>
-      <div style="text-align:center;margin-top:14px;font-size:12.5px;color:var(--text-muted)">
-        Staff/Dokter? <a onclick="showLogin()" style="color:var(--primary);cursor:pointer;font-weight:700">Login di sini</a>
-      </div>
     </div>
   </div>
 </div>
@@ -863,7 +941,7 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
 </div>
 
 <!-- ═══════════ MODALS ═══════════ -->
-<!-- Pasien — 3 Tab: Data Tetap | Kunjungan Baru | Riwayat -->
+<!-- Modal Pasien — Tab: Identitas | Kunjungan | Riwayat -->
 <div class="modal-overlay" id="modal-pasien">
   <div class="modal" style="max-width:860px">
     <div class="modal-header">
@@ -877,41 +955,35 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
     </div>
     <div class="modal-body">
       <input type="hidden" id="ep-id">
+      <input type="hidden" id="kj-edit-idx" value="">
 
       <!-- TAB NAV -->
       <div class="rm-tabs">
-        <button class="rm-tab active" onclick="switchRmTab('identitas',this)">
-          <i class="fas fa-id-card"></i> Data Tetap
-        </button>
-        <button class="rm-tab" id="tab-kunjungan" onclick="switchRmTab('kunjungan',this)">
-          <i class="fas fa-stethoscope"></i> Kunjungan Baru
-        </button>
-        <button class="rm-tab" id="tab-riwayat" onclick="switchRmTab('riwayat',this)">
-          <i class="fas fa-history"></i> Riwayat <span id="riwayat-count" style="background:var(--primary);color:white;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px">0</span>
+        <button class="rm-tab active" id="rmtab-identitas" onclick="switchRmTab('identitas');color:white;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px">0</span>
         </button>
       </div>
 
-      <!-- TAB 1: DATA TETAP (Identitas) -->
+      <!-- TAB IDENTITAS -->
       <div class="rm-tab-body active" id="tab-body-identitas">
         <div class="modal-sec">Identitas Pasien</div>
         <div class="fg">
           <div class="fgroup"><label class="flabel">No. RM</label><input class="finput" id="ep-rm"></div>
           <div class="fgroup"><label class="flabel">Tgl Daftar</label><input class="finput" type="date" id="ep-daftar"></div>
-          <div class="fgroup fc"><label class="flabel">Nama Lengkap *</label><input class="finput" id="ep-nama" placeholder="Nama lengkap pasien"></div>
+          <div class="fgroup fc"><label class="flabel">Nama Lengkap *</label><input class="finput" id="ep-nama"></div>
           <div class="fgroup"><label class="flabel">Usia (tahun)</label><input class="finput" type="number" id="ep-usia" placeholder="45"></div>
           <div class="fgroup"><label class="flabel">No. HP / WhatsApp</label><input class="finput" id="ep-hp" placeholder="08xxxxxxxxxx"></div>
-          <div class="fgroup fc"><label class="flabel">Alamat</label><input class="finput" id="ep-alamat" placeholder="Kota / Kecamatan"></div>
-          <div class="fgroup fc"><label class="flabel">Keluhan Utama (saat pertama daftar)</label>
-            <textarea class="finput" id="ep-keluhan" rows="2" placeholder="Keluhan utama pasien saat pertama datang…"></textarea></div>
+          <div class="fgroup fc"><label class="flabel">Alamat</label><input class="finput" id="ep-alamat"></div>
+          <div class="fgroup fc"><label class="flabel">Keluhan Utama</label>
+            <textarea class="finput" id="ep-keluhan" rows="2" placeholder="Keluhan utama saat pertama datang…"></textarea></div>
           <div class="fgroup"><label class="flabel">Jenis Layanan</label>
             <select class="finput" id="ep-layanan">
               <option value="baru">Pemeriksaan Awal</option>
               <option value="kontrol">Kontrol (Lanjutan)</option>
             </select></div>
           <div class="fgroup"><label class="flabel">Jadwal Janji Temu</label>
-            <input class="finput" id="ep-jadwal" placeholder="Senin, 14 Apr 2026 · 19.30"></div>
+            <input class="finput" id="ep-jadwal" placeholder="Senin, 14 Apr · 19.30"></div>
           <div class="fgroup"><label class="flabel">Jadwal Next Kontrol</label>
-            <input class="finput" id="ep-next" placeholder="Senin, 28 Apr 2026 · 19.30"></div>
+            <input class="finput" id="ep-next" placeholder="Senin, 28 Apr · 19.30"></div>
           <div class="fgroup">
             <label class="flabel">Kontrol Hari Ini?</label>
             <div class="yn-wrap" style="margin-top:4px">
@@ -922,20 +994,21 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
         </div>
       </div>
 
-      <!-- TAB 2: KUNJUNGAN BARU -->
+      <!-- TAB KUNJUNGAN BARU -->
       <div class="rm-tab-body" id="tab-body-kunjungan">
-        <!-- Banner draft (muncul kalau ada draft belum difinalize) -->
+
+        <!-- Banner: draft dari staff -->
         <div id="draft-banner" style="display:none;background:#FFFBEB;border:1.5px solid rgba(245,158,11,.4);border-radius:10px;padding:12px 16px;margin-bottom:14px">
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#92400e">
-            <i class="fas fa-clock"></i> Ada data draft dari staff — dokter silakan lanjutkan pengisian di bawah
+            <i class="fas fa-clock"></i> Ada data draft dari staff — dokter silakan lanjutkan pengisian
           </div>
         </div>
 
-        <!-- Banner edit riwayat (muncul saat dokter klik edit di riwayat) -->
+        <!-- Banner: mode edit riwayat -->
         <div id="edit-riwayat-banner" style="display:none;background:var(--primary-l);border:1.5px solid rgba(37,99,235,.3);border-radius:10px;padding:12px 16px;margin-bottom:14px">
-          <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <div style="font-size:13px;font-weight:700;color:var(--primary)">
-              <i class="fas fa-edit"></i> Mode Edit Riwayat — Kunjungan ke-<span id="edit-riwayat-idx"></span>
+              <i class="fas fa-edit"></i> Edit Kunjungan ke-<span id="edit-riwayat-idx"></span>
             </div>
             <button class="btn btn-outline btn-sm" onclick="batalEditRiwayat()">
               <i class="fas fa-times"></i> Batal Edit
@@ -943,38 +1016,40 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
           </div>
         </div>
 
-        <input type="hidden" id="kj-edit-idx" value="">
-
-        <div class="modal-sec" style="color:var(--teal)"><i class="fas fa-user" style="color:var(--teal)"></i> Bagian Staff — Vital Signs</div>
-        <div class="fg3">
-        <div class="fg3">
+        <!-- Bagian Staff -->
+        <div class="modal-sec" style="color:var(--teal)">
+          <i class="fas fa-user-nurse" style="color:var(--teal)"></i> Bagian Staff — Vital Signs
+        </div>
+        <div class="fg">
           <div class="fgroup"><label class="flabel">Tanggal Kunjungan</label>
             <input class="finput" type="date" id="kj-tgl"></div>
           <div class="fgroup"><label class="flabel">Tensi (mmHg)</label>
             <input class="finput" id="kj-tensi" placeholder="120/80"></div>
           <div class="fgroup"><label class="flabel">Nadi (bpm)</label>
             <input class="finput" id="kj-nadi" placeholder="80"></div>
-        </div>
-        <div class="fg3" style="margin-top:12px">
           <div class="fgroup"><label class="flabel">Berat Badan (kg)</label>
             <input class="finput" id="kj-bb" placeholder="60"></div>
           <div class="fgroup fc"><label class="flabel">Pemeriksaan Fisik</label>
             <input class="finput" id="kj-fisik" placeholder="Temuan pemeriksaan fisik…"></div>
         </div>
 
-        <div class="modal-sec" style="color:var(--primary)"><i class="fas fa-stethoscope" style="color:var(--primary)"></i> Bagian Dokter — Klinis & Tatalaksana</div>
+        <!-- Bagian Dokter -->
+        <div class="modal-sec" style="color:var(--primary)">
+          <i class="fas fa-stethoscope" style="color:var(--primary)"></i> Bagian Dokter — Klinis & Tatalaksana
+        </div>
         <div class="fg">
           <div class="fgroup fc"><label class="flabel">Diagnosis</label>
             <input class="finput" id="kj-diagnosa" placeholder="Misal: Low Back Pain, HNP L4-L5…"></div>
-          <div class="fgroup fc"><label class="flabel">Terapi / Obat yang Diberikan</label>
-            <textarea class="finput" id="kj-terapi" rows="3" placeholder="Daftar obat dan terapi kunjungan ini…"></textarea></div>
+          <div class="fgroup fc"><label class="flabel">Terapi / Obat</label>
+            <textarea class="finput" id="kj-terapi" rows="3" placeholder="Daftar obat dan terapi…"></textarea></div>
           <div class="fgroup fc"><label class="flabel">Catatan Dokter</label>
             <textarea class="finput" id="kj-catatan" rows="2" placeholder="Catatan tambahan…"></textarea></div>
-          <div class="fgroup fc"><label class="flabel">Hasil Penunjang (Foto/USG/Lab)</label>
-            <input class="finput" id="kj-hasil" placeholder="Deskripsi singkat hasil penunjang kunjungan ini"></div>
+          <div class="fgroup fc"><label class="flabel">Hasil Penunjang</label>
+            <input class="finput" id="kj-hasil" placeholder="Deskripsi singkat hasil lab/USG/foto…"></div>
         </div>
 
-        <div class="modal-sec">Lampiran File Kunjungan Ini</div>
+        <!-- Lampiran -->
+        <div class="modal-sec">Lampiran File</div>
         <div class="fgroup">
           <div class="file-drop" id="file-drop-zone" onclick="document.getElementById('ep-file').click()"
             ondragover="event.preventDefault();this.classList.add('drag')"
@@ -982,48 +1057,44 @@ select.finput{cursor:pointer;}textarea.finput{resize:vertical;}
             ondrop="handleFileDrop(event)">
             <i class="fas fa-cloud-upload-alt"></i>
             <p><strong>Klik atau seret file ke sini</strong></p>
-            <p style="font-size:11.5px;margin-top:3px">Foto, PDF — maks 2 MB per file</p>
+            <p style="font-size:11.5px;margin-top:3px">Foto, PDF — maks 1 MB per file</p>
           </div>
           <input type="file" id="ep-file" multiple accept="image/*,.pdf" style="display:none" onchange="previewFiles(this.files)">
           <div class="file-preview-list" id="ep-file-preview"></div>
         </div>
+        <div id="existing-lamp-section" style="display:none;margin-top:10px">
+          <div class="modal-sec">Lampiran Sebelumnya</div>
+          <div class="lamp-list" id="ep-lamp-list"></div>
+        </div>
 
-        <div class="modal-sec">Biaya Kunjungan Ini</div>
-        <div class="biaya-split">
+        <!-- Biaya -->
+        <div class="modal-sec">Biaya Kunjungan</div>
+        <div class="fg">
           <div class="fgroup">
-            <label class="flabel">💊 Biaya Pemeriksaan / Konsultasi (Rp)</label>
+            <label class="flabel">💊 Biaya Pemeriksaan (Rp)</label>
             <input class="finput" type="number" id="kj-biaya-periksa" placeholder="0" oninput="updateTotalBiaya()">
           </div>
           <div class="fgroup">
-            <label class="flabel">💉 Biaya Obat / Suntik / Tindakan (Rp)</label>
+            <label class="flabel">💉 Biaya Obat / Suntik (Rp)</label>
             <input class="finput" type="number" id="kj-biaya-obat" placeholder="0" oninput="updateTotalBiaya()">
           </div>
         </div>
-        <div class="biaya-total-box" id="biaya-total-box" style="margin-top:10px;display:none">
-          <span class="lbl"><i class="fas fa-receipt"></i> Total Biaya Kunjungan</span>
+        <div class="biaya-total-box" id="biaya-total-box" style="display:none;margin-top:10px">
+          <span class="lbl"><i class="fas fa-receipt"></i> Total</span>
           <span class="val" id="biaya-total-val">Rp 0</span>
-        </div>
-        <div style="font-size:11.5px;color:var(--text-muted);margin-top:6px">
-          <i class="fas fa-info-circle"></i> Biaya akan otomatis tercatat di Laporan Keuangan hari ini.
-        </div>
-
-        <!-- Lampiran existing (dari kunjungan sebelumnya) -->
-        <div id="existing-lamp-section" style="display:none">
-          <div class="modal-sec">Semua Lampiran Pasien</div>
-          <div class="lamp-list" id="ep-lamp-list"></div>
         </div>
       </div>
 
-      <!-- TAB 3: RIWAYAT -->
+      <!-- TAB RIWAYAT -->
       <div class="rm-tab-body" id="tab-body-riwayat">
-        <div id="riwayat-empty" style="display:none">
-          <div class="empty"><i class="fas fa-history"></i><p>Belum ada riwayat kunjungan sebelumnya</p></div>
+        <div id="riwayat-empty" class="empty" style="display:none">
+          <i class="fas fa-history"></i><p>Belum ada riwayat kunjungan</p>
         </div>
         <div id="riwayat-list"></div>
       </div>
 
     </div><!-- /modal-body -->
-    <div class="modal-footer" style="gap:8px">
+    <div class="modal-footer" style="gap:8px;flex-wrap:wrap">
       <button class="btn btn-outline" onclick="closeModal('modal-pasien')">Batal</button>
       <button class="btn btn-warning" id="btn-draft-pasien" onclick="saveDraft()">
         <i class="fas fa-clock"></i> Simpan Draft
@@ -1250,12 +1321,85 @@ let _jenis='baru', _selHari=null, _selSesi=null, _foundPasienId=null;
 let _bookedSlots={};
 
 function setJenis(j){
+  // Legacy compat - tidak dipakai langsung tapi dipertahankan
   _jenis=j;
-  document.getElementById('jk-baru').classList.toggle('selected',j==='baru');
-  document.getElementById('jk-kontrol').classList.toggle('selected',j==='kontrol');
+}
+
+// ── WIZARD FUNCTIONS ──────────────────────────────────────────
+function goWizard(step){
+  document.querySelectorAll('.wizard-panel').forEach((p,i)=>{
+    p.classList.toggle('active', i+1===step);
+  });
+  // Update step indicator
+  for(let i=1;i<=4;i++){
+    const ws=document.getElementById('ws-'+i);
+    const wl=document.getElementById('wl-'+i);
+    if(!ws) continue;
+    ws.classList.remove('active','done');
+    if(i<step) ws.classList.add('done');
+    else if(i===step) ws.classList.add('active');
+    if(wl){wl.classList.toggle('done', i<step);}
+  }
+  // Scroll ke atas form
+  document.querySelector('.pub-card')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function setJenisWizard(j){
+  _jenis=j;
+  // Highlight pilihan
+  document.getElementById('jk-baru').classList.toggle('selected', j==='baru');
+  document.getElementById('jk-kontrol').classList.toggle('selected', j==='kontrol');
+  // Tampilkan panel sesuai jenis di step 2
   document.getElementById('form-baru').style.display=j==='baru'?'block':'none';
   document.getElementById('kontrol-lookup').style.display=j==='kontrol'?'block':'none';
   _foundPasienId=null;
+  document.getElementById('lk-found').style.display='none';
+  document.getElementById('lk-notfound').style.display='none';
+  goWizard(2);
+}
+
+function wizardNext2(){
+  // Validasi step 2
+  if(_jenis==='baru'){
+    const nama=document.getElementById('pf-nama').value.trim();
+    const hp=document.getElementById('pf-hp').value.trim();
+    const usia=document.getElementById('pf-usia').value;
+    const keluhan=document.getElementById('pf-keluhan').value.trim();
+    if(!nama){toast('Nama wajib diisi!','error');document.getElementById('pf-nama').focus();return;}
+    if(!usia){toast('Usia wajib diisi!','error');document.getElementById('pf-usia').focus();return;}
+    if(!hp){toast('No. HP wajib diisi!','error');document.getElementById('pf-hp').focus();return;}
+    if(!keluhan){toast('Keluhan utama wajib diisi!','error');document.getElementById('pf-keluhan').focus();return;}
+  }else{
+    if(!_foundPasienId){toast('Cari dan konfirmasi data kamu dulu!','error');return;}
+  }
+  goWizard(3);
+}
+
+function wizardNext3(){
+  if(!_selHari||!_selSesi){toast('Pilih hari dan sesi terlebih dahulu!','error');return;}
+  // Isi konfirmasi
+  const nama = _jenis==='baru'
+    ? document.getElementById('pf-nama').value
+    : document.getElementById('lk-name').textContent;
+  const jadwal = _selHari.label+' · Pukul '+_selSesi;
+  document.getElementById('konfirmasi-box').innerHTML=`
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <i class="fas fa-user-circle" style="color:var(--primary);font-size:18px;margin-top:2px"></i>
+      <div><div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase">Nama</div>
+      <div style="font-weight:700;font-size:15px">${nama}</div></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <i class="fas fa-tag" style="color:var(--accent);font-size:18px;margin-top:2px"></i>
+      <div><div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase">Jenis</div>
+      <div style="font-weight:700">${_jenis==='baru'?'Pasien Baru — Pemeriksaan Awal':'Kontrol / Kunjungan Ulang'}</div></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <i class="fas fa-calendar-check" style="color:var(--green);font-size:18px;margin-top:2px"></i>
+      <div><div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase">Jadwal</div>
+      <div style="font-weight:700;color:var(--green)">${jadwal}</div></div>
+    </div>
+  `;
+  goWizard(4);
 }
 
 async function buildHariGrid(){
@@ -1569,9 +1713,12 @@ function resetPublicForm(){
   document.getElementById('lk-found').style.display='none';
   document.getElementById('lk-notfound').style.display='none';
   document.getElementById('jadwal-sel').style.display='none';
+  document.getElementById('jk-baru').classList.remove('selected');
+  document.getElementById('jk-kontrol').classList.remove('selected');
   _selHari=_selSesi=_foundPasienId=null;
-  setJenis('baru');
-  buildHariGrid(); // reload slots
+  _jenis='baru';
+  buildHariGrid();
+  goWizard(1); // kembali ke step 1
 }
 
 // ── GOOGLE CALENDAR ────────────────────────────────────────────
@@ -1904,17 +2051,19 @@ async function editPasienById(id){
 }
 
 // ── TAB SWITCHER ──────────────────────────────────────────────
-function switchRmTab(tab, btn){
+function switchRmTab(tab){
   document.querySelectorAll('.rm-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.rm-tab-body').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-body-'+tab).classList.add('active');
+  const tabBtn = document.getElementById('rmtab-'+tab);
+  if(tabBtn) tabBtn.classList.add('active');
+  const tabBody = document.getElementById('tab-body-'+tab);
+  if(tabBody) tabBody.classList.add('active');
 }
 
 // ── FILE UPLOAD HELPERS ───────────────────────────────────────
 function previewFiles(files){
   for(const f of files){
-    if(f.size > 2*1024*1024){ toast(`${f.name} terlalu besar (maks 1 MB)`,'warning'); continue; }
+    if(f.size > 2*1024*1024){ toast(`${f.name} terlalu besar (maks 2 MB)`,'warning'); continue; }
     _pendingFiles.push(f);
   }
   renderFilePreview();
@@ -2021,6 +2170,33 @@ function updateTotalBiaya(){
   }
 }
 
+// ── RIWAYAT ITEM RENDERER (terpisah agar tidak ada nested backtick) ──
+function renderRiwayatItem(r, realIdx, displayNum){
+  let html = '';
+  html += '<div class="visit-item">';
+  html += '<div class="visit-head">';
+  html += '<span class="visit-date">Kunjungan ke-'+displayNum+' &middot; '+(r.tglKunjungan||r.jadwal||r.tgl||'—')+'</span>';
+  const totalBiaya=(r.biayaPeriksa||0)+(r.biayaObat||0)||(r.biaya||0);
+  html += '<div style="display:flex;align-items:center;gap:6px">';
+  html += '<span class="visit-biaya">'+(totalBiaya>0?rp(totalBiaya):'—')+'</span>';
+  html += '<button class="btn btn-outline btn-sm btn-icon" onclick="editRiwayat('+realIdx+')" title="Edit"><i class="fas fa-edit"></i></button>';
+  html += '<button class="btn btn-danger btn-sm btn-icon" onclick="hapusRiwayat('+realIdx+')" title="Hapus"><i class="fas fa-trash"></i></button>';
+  html += '</div></div>';
+  html += '<div class="visit-body">';
+  if(r.diagnosa) html += '<div><strong>Dx:</strong> '+r.diagnosa+'</div>';
+  if(r.terapi)   html += '<div><strong>Terapi:</strong> '+r.terapi+'</div>';
+  if(r.tensi||r.nadi||r.bb) html += '<div><strong>Vital:</strong> TD '+(r.tensi||'—')+' &middot; Nadi '+(r.nadi||'—')+' &middot; BB '+(r.bb||'—')+' kg</div>';
+  if(r.fisik)    html += '<div><strong>Pemfis:</strong> '+r.fisik+'</div>';
+  if(r.hasil)    html += '<div><strong>Penunjang:</strong> '+r.hasil+'</div>';
+  if(r.catatan)  html += '<div><strong>Catatan:</strong> '+r.catatan+'</div>';
+  if(r.biayaPeriksa||r.biayaObat){
+    html += '<div style="margin-top:4px;font-size:11.5px;color:var(--text-muted)">💊 Periksa: '+rp(r.biayaPeriksa||0)+' &nbsp;&middot;&nbsp; 💉 Obat/Suntik: '+rp(r.biayaObat||0)+'</div>';
+  }
+  if((r.lampiran||[]).length) html += renderLampiranHtml(r.lampiran);
+  html += '</div></div>';
+  return html;
+}
+
 // ── LAMPIRAN HELPER ───────────────────────────────────────────
 // Terpisah agar tidak ada nested template literal
 function renderLampiranHtml(lampiranArr){
@@ -2072,7 +2248,7 @@ function openModalPasien(){
   _pendingFiles=[];
   setYN(false);
   // Buka tab identitas
-  switchRmTab('identitas',document.querySelector('.rm-tab'));
+  switchRmTab('identitas');
   openModal('modal-pasien');
 }
 
@@ -2133,35 +2309,13 @@ function openModalEditPasien(d){
   document.getElementById('riwayat-count').textContent=riwayat.length;
   if(riwayat.length>0){
     document.getElementById('riwayat-empty').style.display='none';
-    document.getElementById('riwayat-list').innerHTML=riwayat.slice().reverse().map((r,i)=>`
-      <div class="visit-item">
-        <div class="visit-head">
-          <span class="visit-date">Kunjungan ke-${riwayat.length-i} · ${r.tglKunjungan||r.jadwal||r.tgl||'—'}</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span class="visit-biaya">${(r.biayaPeriksa||0)+(r.biayaObat||0)>0 ? rp((r.biayaPeriksa||0)+(r.biayaObat||0)) : r.biaya?rp(r.biaya):'—'}</span>
-            <button class="btn btn-outline btn-sm btn-icon" onclick="editRiwayat(${riwayat.length-1-i})" title="Edit kunjungan ini"><i class="fas fa-edit"></i></button>
-            <button class="btn btn-danger btn-sm btn-icon" onclick="hapusRiwayat(${riwayat.length-1-i})" title="Hapus kunjungan ini"><i class="fas fa-trash"></i></button>
-          </div>
-        </div>
-        <div class="visit-body">
-          ${r.diagnosa?`<div><strong>Dx:</strong> ${r.diagnosa}</div>`:''}
-          ${r.terapi?`<div><strong>Terapi:</strong> ${r.terapi}</div>`:''}
-          ${r.tensi||r.nadi||r.bb?`<div><strong>Vital:</strong> TD ${r.tensi||'—'} · Nadi ${r.nadi||'—'} · BB ${r.bb||'—'} kg</div>`:''}
-          ${r.fisik?`<div><strong>Pemfis:</strong> ${r.fisik}</div>`:''}
-          ${r.hasil?`<div><strong>Penunjang:</strong> ${r.hasil}</div>`:''}
-          ${r.catatan?`<div><strong>Catatan:</strong> ${r.catatan}</div>`:''}
-          ${r.biayaPeriksa||r.biayaObat?`<div style="margin-top:4px;font-size:11.5px;color:var(--text-muted)">
-            💊 Periksa: ${rp(r.biayaPeriksa||0)} &nbsp;·&nbsp; 💉 Obat/Suntik: ${rp(r.biayaObat||0)}
-          </div>`:''}
-          ${(r.lampiran||[]).length ? renderLampiranHtml(r.lampiran) : ''}
-        </div>
-      </div>`).join('');
+    document.getElementById('riwayat-list').innerHTML=riwayat.slice().reverse().map((r,i)=>renderRiwayatItem(r, riwayat.length-1-i, riwayat.length-i)).join('');
   }else{
     document.getElementById('riwayat-empty').style.display='block';
     document.getElementById('riwayat-list').innerHTML='';
   }
   // Buka di tab identitas
-  switchRmTab('identitas',document.querySelector('.rm-tab'));
+  switchRmTab('identitas');
   openModal('modal-pasien');
 }
 
@@ -2278,7 +2432,7 @@ function editRiwayat(idx){
   document.getElementById('edit-riwayat-idx').textContent = idx+1;
 
   // Pindah ke tab kunjungan
-  switchRmTab('kunjungan', document.querySelectorAll('.rm-tab')[1]);
+  switchRmTab('kunjungan');
   toast('Data kunjungan ke-'+(idx+1)+' dimuat untuk diedit','info');
 }
 
@@ -2324,7 +2478,7 @@ async function hapusRiwayat(idx){
 async function savePasien(){
   const nama=document.getElementById('ep-nama').value.trim();
   if(!nama){
-    switchRmTab('identitas',document.querySelector('.rm-tab'));
+    switchRmTab('identitas');
     toast('Nama wajib diisi!','error');return;
   }
   const id=document.getElementById('ep-id').value;
@@ -2340,7 +2494,12 @@ async function savePasien(){
   const kjDiagnosa=document.getElementById('kj-diagnosa').value.trim();
   const kjTerapi=document.getElementById('kj-terapi').value.trim();
   const kjTensi=document.getElementById('kj-tensi').value.trim();
-  const adaDataKunjungan=isEditMode||kjDiagnosa||kjTerapi||kjTensi||totalBiaya>0||_pendingFiles.length>0;
+  const kjNadi=document.getElementById('kj-nadi').value.trim();
+  const kjBb=document.getElementById('kj-bb').value.trim();
+  const kjFisik=document.getElementById('kj-fisik').value.trim();
+  const kjCatatan=document.getElementById('kj-catatan').value.trim();
+  const kjHasil=document.getElementById('kj-hasil').value.trim();
+  const adaDataKunjungan=isEditMode||kjDiagnosa||kjTerapi||kjTensi||kjNadi||kjBb||kjFisik||kjCatatan||kjHasil||totalBiaya>0||_pendingFiles.length>0;
 
   // Upload / proses file baru jika ada
   let newLamp=[];
